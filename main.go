@@ -11,14 +11,14 @@ import (
 
 // Structs to unmarshal JSON response
 type ScheduledEvent struct {
-	EventId       string   `json:"EventId"`
-	EventStatus   string   `json:"EventStatus"`
-	EventType     string   `json:"EventType"`
-	ResourceType  string   `json:"ResourceType"`
-	Resources     []string `json:"Resources"`
-	NotBefore     string   `json:"NotBefore"`
-	Description   string   `json:"Description"`
-	EventSource   string   `json:"EventSource"`
+	EventId      string   `json:"EventId"`
+	EventStatus  string   `json:"EventStatus"`
+	EventType    string   `json:"EventType"`
+	ResourceType string   `json:"ResourceType"`
+	Resources    []string `json:"Resources"`
+	NotBefore    string   `json:"NotBefore"`
+	Description  string   `json:"Description"`
+	EventSource  string   `json:"EventSource"`
 }
 
 type EventResponse struct {
@@ -74,7 +74,7 @@ func main() {
 				for _, resource := range event.Resources {
 					if resource == nodeName {
 						fmt.Println("Preempt event found for this node. Draining node.")
-						cmd := exec.Command("kubectl", "drain", nodeName)
+						cmd := exec.Command("kubectl", "drain", nodeName, "--ignore-daemonsets", "--force")
 						err := cmd.Run()
 						if err != nil {
 							fmt.Println("Error executing kubectl command:", err)
