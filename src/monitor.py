@@ -1,18 +1,122 @@
 from kubernetes import client, config, watch
+from kubernetes.client.rest import ApiException
 
-# Load the kube config from the default location (`~/.kube/config`).
-config.load_kube_config()
+import os
+import requests
+import time
 
-# Create an instance of the API class.
-v1 = client.CoreV1Api()
-w = watch.Watch()
+# https://github.com/kubernetes-client/python/blob/master/examples/in_cluster_config.py
+config.load_incluster_config()
 
-# {"DocumentIncarnation":1,"Events":[{"EventId":"51941B56-8080-45AC-81AE-8BDA818F5958","EventStatus":"Scheduled","EventType":"Preempt","ResourceType":"VirtualMachine","Resources":["aks-workloads1-15413341-vmss_3"],"NotBefore":"Sat, 16 Mar 2024 19:52:09 GMT","Description":"","EventSource":"Platform"}]}
 
-# Watching for events in all namespaces. Adjust the namespace as necessary.
-for event in w.stream(v1.list_event_for_all_namespaces):
-    print(f"Event: {event['type']} {event['object'].kind}")
-    # Here, you can filter events and trigger reactions
-    if event['object'].reason == 'Preempted':  # Example condition
-        # Trigger your reaction here
-        print("Node Preemption Event Detected!")
+def main():
+    node_name = os.getenv("NODE_NAME")
+    pod_name = os.getenv("POD_NAME")
+    if not node_name or not pod_name:
+        print("Environment variables not set.")
+        return
+
+    url = "http://169.254.169.254/metadata/scheduledevents?api-version=2019-08-01"
+    headers = {"Metadata": "true"}
+
+    while True:
+        # add polling for scheduled events here
+        # to improve the performance
+
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+        except requests.RequestException as err:
+            print(f"Error performing request: {err}")
+            # time.sleep(0.1)
+            continue
+
+        event_response = response.text  # response.json()
+
+        for event in event_response:  # ["Events"]:
+            # if event["EventType"] == "Preempt":
+            if True is True:
+                # if node_name in event["Resources"]:
+                if True is True:
+                    print("Preempt event found for this node.")
+                    v1 = client.CoreV1Api()
+                    # cordoning the node
+                    body = client.V1Node(spec=client.V1NodeSpec(unschedulable=True))
+                    v1.patch_node(node_name, body)
+                    print("Node successfully cordoned: {}".format(node_name))
+
+                    # deleting pods on the node
+                    try:
+                        pods = v1.list_pod_for_all_namespaces(watch=False)
+                    except ApiException as e:
+                        print(f"Error: {e}")
+
+                    for pod in pods.items:
+                        if pod.metadata.name == pod_name:
+                            continue
+                        if (
+                            pod.spec.node_name == node_name
+                            and pod.metadata.owner_references[0].kind != "DaemonSet"
+                        ):
+                            volumes = pod.spec.volumes
+                            v1.delete_namespaced_pod(
+                                pod.metadata.name, pod.metadata.namespace
+                            )
+                            print(
+                                "Pod on node successfully deleted: {}".format(
+                                    pod.metadata.name
+                                )
+                            )
+                            for volume in volumes:
+                                if volume.persistent_volume_claim is not None:
+                                    pvc_name = volume.persistent_volume_claim.claim_name
+                                    try:
+                                        v1.delete_namespaced_persistent_volume_claim(
+                                            pvc_name, pod.metadata.namespace
+                                        )
+                                        print(
+                                            "Pod PVCs on node successfully deleted: {}".format(
+                                                pvc_name
+                                            )
+                                        )
+                                    except ApiException as e:
+                                        print(f"Error: {e}")
+
+                    try:
+                        pvs = v1.list_persistent_volume(watch=False)
+                    except ApiException as e:
+                        print(f"Error: {e}")
+                    # deleting PVs on the node
+                    for pv in pvs.items:
+                        if not pv.metadata.name.startswith("local-disk-"):
+                            continue
+                        if (
+                            pv.spec.node_affinity
+                            and pv.spec.node_affinity.required.node_selector_terms
+                        ):
+                            for (
+                                term
+                            ) in pv.spec.node_affinity.required.node_selector_terms:
+                                for expr in term.match_expressions:
+                                    if (
+                                        expr.key == "kubernetes.io/hostname"
+                                        and node_name in expr.values
+                                    ):
+                                        try:
+                                            v1.delete_persistent_volume(
+                                                pv.metadata.name
+                                            )
+                                            print(
+                                                "PVs on node successfully deleted: {}".format(
+                                                    pv.metadata.name
+                                                )
+                                            )
+                                        except ApiException as e:
+                                            print(f"Error: {e}")
+
+        # sleep for 10 seconds before polling again
+        time.sleep(0.1)
+
+
+if __name__ == "__main__":
+    main()
