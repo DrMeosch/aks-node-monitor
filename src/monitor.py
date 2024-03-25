@@ -31,13 +31,11 @@ def main():
             # time.sleep(0.1)
             continue
 
-        event_response = response.text  # response.json()
+        event_response = response.json()
 
-        for event in event_response:  # ["Events"]:
-            # if event["EventType"] == "Preempt":
-            if True is True:
-                # if node_name in event["Resources"]:
-                if True is True:
+        for event in event_response["Events"]:
+            if event["EventType"] == "Preempt":
+                if node_name in event["Resources"]:
                     print("Preempt event found for this node.")
                     v1 = client.CoreV1Api()
                     # cordoning the node
