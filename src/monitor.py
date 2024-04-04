@@ -27,12 +27,11 @@ def main():
         try:
             response = requests.get(url, headers=headers)
             response.raise_for_status()
+            event_response = response.json()
         except requests.RequestException as err:
             print(f"Error performing request: {err}")
-            # time.sleep(0.1)
+            time.sleep(0.1)
             continue
-
-        event_response = response.json()
 
         # for event in event_response["Events"]:
         if True is True:
