@@ -18,6 +18,7 @@ def main():
 
     url = "http://169.254.169.254/metadata/scheduledevents?api-version=2019-08-01"
     headers = {"Metadata": "true"}
+    time.sleep(60)
 
     while True:
         # add polling for scheduled events here
@@ -33,9 +34,12 @@ def main():
 
         event_response = response.json()
 
-        for event in event_response["Events"]:
-            if event["EventType"] == "Preempt":
-                if node_name in event["Resources"]:
+        # for event in event_response["Events"]:
+        if True is True:
+            # if event["EventType"] == "Preempt":
+            if True is True:
+                # if node_name in event["Resources"]:
+                if True is True:
                     print("Preempt event found for this node.")
                     v1 = client.CoreV1Api()
                     # cordoning the node
