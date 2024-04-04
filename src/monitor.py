@@ -93,7 +93,7 @@ def main():
                         print(f"Error: {e}")
                     # deleting PVs on the node
                     for pv in pvs.items:
-                        if not pv.metadata.name.startswith("local-disk-"):
+                        if not pv.metadata.name.startswith("local-pv-"):
                             continue
                         if (
                             pv.spec.node_affinity
