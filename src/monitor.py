@@ -61,14 +61,18 @@ def main():
                             and pod.metadata.owner_references[0].kind != "DaemonSet"
                         ):
                             volumes = pod.spec.volumes
-                            v1.delete_namespaced_pod(
-                                pod.metadata.name, pod.metadata.namespace
-                            )
-                            print(
-                                "Pod on node successfully deleted: {}".format(
-                                    pod.metadata.name
+                            try:
+                                v1.delete_namespaced_pod(
+                                    pod.metadata.name, pod.metadata.namespace
                                 )
-                            )
+                            except ApiException as e:
+                                print(f"Error deleting pod {pod.metadata.name}: {e}")
+                            else:
+                                print(
+                                    "Pod on node successfully deleted: {}".format(
+                                        pod.metadata.name
+                                    )
+                                )
                             for volume in volumes:
                                 if volume.persistent_volume_claim is not None:
                                     pvc_name = volume.persistent_volume_claim.claim_name
