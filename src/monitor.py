@@ -9,7 +9,7 @@ import time
 config.load_incluster_config()
 
 # delete pvc in this namespace
-SPLUNK_NAMESPACE = os.getenv("SPLUNK_NAMESPACE", "splunk")
+MONITOR_NAMESPACE = ["splunk"]
 
 
 def main():
@@ -78,8 +78,7 @@ def main():
                             for volume in volumes:
                                 if (
                                     volume.persistent_volume_claim is not None
-                                    and pod.metadata.namespace
-                                    == SPLUNK_NAMESPACE
+                                    and pod.metadata.namespace in MONITOR_NAMESPACE
                                 ):
                                     pvc_name = volume.persistent_volume_claim.claim_name
                                     try:
