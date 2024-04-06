@@ -11,7 +11,8 @@ config.load_incluster_config()
 def main():
     while True:
         v1 = client.CoreV1Api()
-        nodes = [node.metadata.name for node in v1.list_node(watch=False)]
+        nodes = v1.list_node(watch=False)
+        nodes = [node.metadata.name for node in nodes.items]
         try:
             pvs = v1.list_persistent_volume(watch=False)
         except ApiException as e:
