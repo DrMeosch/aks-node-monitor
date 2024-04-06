@@ -35,8 +35,8 @@ def main():
                             try:
                                 v1.delete_persistent_volume(pv.metadata.name)
                                 print(
-                                    "PVs of node successfully deleted: {}".format(
-                                        pv.metadata.name
+                                    "PVs of node {} successfully deleted: {}".format(
+                                        expr.values[0], pv.metadata.name
                                     )
                                 )
                             except ApiException as e:
