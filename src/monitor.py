@@ -8,6 +8,9 @@ import time
 # https://github.com/kubernetes-client/python/blob/master/examples/in_cluster_config.py
 config.load_incluster_config()
 
+# delete pvc in this namespace
+SPLUNK_NAMESPACE = os.getenv("SPLUNK_NAMESPACE", "splunk")
+
 
 def main():
     node_name = os.getenv("NODE_NAME")
@@ -73,7 +76,11 @@ def main():
                                     )
                                 )
                             for volume in volumes:
-                                if volume.persistent_volume_claim is not None:
+                                if (
+                                    volume.persistent_volume_claim is not None
+                                    and volume.persistent_volume_claim.metadata.namespace
+                                    == SPLUNK_NAMESPACE
+                                ):
                                     pvc_name = volume.persistent_volume_claim.claim_name
                                     try:
                                         v1.delete_namespaced_persistent_volume_claim(
