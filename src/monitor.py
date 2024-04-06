@@ -78,7 +78,7 @@ def main():
                             for volume in volumes:
                                 if (
                                     volume.persistent_volume_claim is not None
-                                    and volume.persistent_volume_claim.metadata.namespace
+                                    and pod.metadata.namespace
                                     == SPLUNK_NAMESPACE
                                 ):
                                     pvc_name = volume.persistent_volume_claim.claim_name
