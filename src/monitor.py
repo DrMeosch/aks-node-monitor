@@ -33,7 +33,6 @@ def main():
         except requests.RequestException as err:
             print(f"Error performing request: {err}")
             print("Status code: {}".format(response.status_code))
-            print(response.text)
             time.sleep(0.1)
             continue
 
@@ -123,8 +122,9 @@ def main():
                                         except ApiException as e:
                                             print(f"Error: {e}")
 
-        # sleep for 10 seconds before polling again
-        time.sleep(0.1)
+        # sleep for 1 seconds before polling again
+        # https://learn.microsoft.com/en-us/azure/virtual-machines/windows/scheduled-events#polling-frequency
+        time.sleep(1)
 
 
 if __name__ == "__main__":
