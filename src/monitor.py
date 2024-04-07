@@ -36,7 +36,7 @@ def main():
         for event in events:
             if event.involved_object.kind == "Node":
                 node_name = event.involved_object.name
-                if node_name in nodes:
+                if node_name in nodes and node_name not in PROCESSED_NODES:
                     print("Preempt event found for node: {}".format(node_name))
                     # cordoning the node
                     body = client.V1Node(spec=client.V1NodeSpec(unschedulable=True))
