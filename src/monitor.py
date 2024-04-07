@@ -7,9 +7,6 @@ import time
 # https://github.com/kubernetes-client/python/blob/master/examples/in_cluster_config.py
 config.load_incluster_config()
 
-# delete pvc in this namespace
-MONITOR_NAMESPACE = ["splunk"]
-
 PROCESSED_NODES = []
 
 
@@ -71,11 +68,13 @@ def main():
                                     )
                                 )
                             for volume in volumes:
-                                if (
-                                    volume.persistent_volume_claim is not None
-                                    and pod.metadata.namespace in MONITOR_NAMESPACE
-                                ):
+                                if volume.persistent_volume_claim is not None:
                                     pvc_name = volume.persistent_volume_claim.claim_name
+                                    pvc = v1.read_namespaced_persistent_volume_claim(
+                                        pvc_name, pod.metadata.namespace
+                                    )
+                                    if pvc.spec.storage_class_name != "local-disk":
+                                        continue
                                     try:
                                         v1.delete_namespaced_persistent_volume_claim(
                                             pvc_name, pod.metadata.namespace
