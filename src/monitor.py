@@ -1,7 +1,6 @@
 from kubernetes import client, config, watch
 from kubernetes.client.rest import ApiException
 
-import os
 import requests
 import time
 
@@ -10,6 +9,8 @@ config.load_incluster_config()
 
 # delete pvc in this namespace
 MONITOR_NAMESPACE = ["splunk"]
+
+PROCESSED_NODES = []
 
 
 def main():
@@ -116,6 +117,8 @@ def main():
                                             )
                                         except ApiException as e:
                                             print(f"Error: {e}")
+                    # add node to processed list
+                    PROCESSED_NODES.append(node_name)
 
         # sleep for 1 seconds before polling again
         # https://learn.microsoft.com/en-us/azure/virtual-machines/windows/scheduled-events#polling-frequency
