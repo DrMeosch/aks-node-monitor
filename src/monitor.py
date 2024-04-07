@@ -21,7 +21,6 @@ def main():
 
     url = "http://169.254.169.254/metadata/scheduledevents?api-version=2019-08-01"
     headers = {"Metadata": "true"}
-    time.sleep(60)
 
     while True:
         # add polling for scheduled events here
@@ -36,12 +35,9 @@ def main():
             time.sleep(0.1)
             continue
 
-        # for event in event_response["Events"]:
-        if True is True:
-            # if event["EventType"] == "Preempt":
-            if True is True:
-                # if node_name in event["Resources"]:
-                if True is True:
+        for event in event_response["Events"]:
+            if event["EventType"] == "Preempt":
+                if node_name in event["Resources"]:
                     print("Preempt event found for this node.")
                     v1 = client.CoreV1Api()
                     # cordoning the node
@@ -118,8 +114,8 @@ def main():
                                                 pv.metadata.name
                                             )
                                             print(
-                                                "PVs on node successfully deleted: {}".format(
-                                                    pv.metadata.name
+                                                "PVs on node {} successfully deleted: {}".format(
+                                                    node_name, pv.metadata.name
                                                 )
                                             )
                                         except ApiException as e:
