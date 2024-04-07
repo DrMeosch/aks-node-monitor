@@ -32,6 +32,8 @@ def main():
             event_response = response.json()
         except requests.RequestException as err:
             print(f"Error performing request: {err}")
+            print("Status code: {}".format(response.status_code))
+            print(response.text)
             time.sleep(0.1)
             continue
 
