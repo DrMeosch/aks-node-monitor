@@ -25,7 +25,9 @@ def main():
             events = [
                 event
                 for event in events.items
-                if event.type == "Warning" and event.reason == "PreemptScheduled"
+                if event.type == "Warning"
+                and event.reason == "PreemptScheduled"
+                and "Scheduled" in event.message
             ]
             nodes = v1.list_node(watch=False)
             nodes = [node.metadata.name for node in nodes.items]
