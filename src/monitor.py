@@ -13,34 +13,31 @@ MONITOR_NAMESPACE = ["splunk"]
 
 
 def main():
-    node_name = os.getenv("NODE_NAME")
-    pod_name = os.getenv("POD_NAME")
-    if not node_name or not pod_name:
-        print("Environment variables not set.")
-        return
-
-    url = "http://169.254.169.254/metadata/scheduledevents?api-version=2019-08-01"
-    headers = {"Metadata": "true"}
 
     while True:
         # add polling for scheduled events here
         # to improve the performance
 
         try:
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()
-            event_response = response.json()
+            v1 = client.CoreV1Api()
+            events = v1.list_event_for_all_namespaces(watch=False)
+            events = [
+                event
+                for event in events.items
+                if event.type == "Warning" and event.reason == "PreemptScheduled"
+            ]
+            nodes = v1.list_node(watch=False)
+            nodes = [node.metadata.name for node in nodes.items]
         except requests.RequestException as err:
             print(f"Error performing request: {err}")
-            print("Status code: {}".format(response.status_code))
             time.sleep(0.1)
             continue
 
-        for event in event_response["Events"]:
-            if event["EventType"] == "Preempt":
-                if node_name in event["Resources"]:
-                    print("Preempt event found for this node.")
-                    v1 = client.CoreV1Api()
+        for event in events:
+            if event.involved_object.kind == "Node":
+                node_name = event.involved_object.name
+                if node_name in nodes:
+                    print("Preempt event found for node: {}".format(node_name))
                     # cordoning the node
                     body = client.V1Node(spec=client.V1NodeSpec(unschedulable=True))
                     v1.patch_node(node_name, body)
@@ -53,8 +50,6 @@ def main():
                         print(f"Error: {e}")
 
                     for pod in pods.items:
-                        if pod.metadata.name == pod_name:
-                            continue
                         if (
                             pod.spec.node_name == node_name
                             and pod.metadata.owner_references[0].kind != "DaemonSet"
